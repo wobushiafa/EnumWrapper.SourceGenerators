@@ -80,6 +80,17 @@ namespace MyApp
 
 This generates `OrderStatusWrapper`.
 
+> [!TIP]
+> **Optional: Customizing Class Name & Namespace**
+> These properties are **completely optional**. By default, the wrapper class is automatically generated in the same namespace as the enum, using the name `{EnumName}Wrapper`. You only need to specify them if you want to override the defaults:
+> ```csharp
+> [GenerateEnumWrapper(WrapperClassName = "MyStatusWrapper", CustomNamespace = "MyCustomNamespace.Domain")]
+> public enum OrderStatus
+> {
+>     // ...
+> }
+> ```
+
 ##### UI Binding (ComboBox / ListBox)
 Bind directly to `Items`. Since `ToString()` returns `Description`, **no `DisplayMemberPath` is needed**:
 
@@ -110,6 +121,25 @@ if (OrderStatusWrapper.TryParse("pending", out var w2))
     Console.WriteLine(w2.Description); // "Pending Payment"
 }
 ```
+
+##### Generated Class API Structure
+
+The generated class is a `partial class` implementing `IEquatable<T>`, allowing you to easily extend it in your own partial class files. It exposes the following APIs:
+
+- **Instance Properties**:
+  - `Value`: The original enum type value (e.g. `OrderStatus`).
+  - `Description`: The human-readable string (resolved from `[Description]`, `[Display(Name = ...)]`, or fallbacks to the field name).
+  - `UnderlyingValue`: The numeric representation cast to the enum's underlying type (e.g. `byte`, `int`, `long`).
+  - `GroupName`: The group category name specified in `[Display(GroupName = ...)]` (returns `null` if not specified).
+- **Static Properties**:
+  - `Items`: An `IReadOnlyList<T>` containing all sorted wrapper instances (useful for binding to UI controls).
+- **Static Methods**:
+  - `FromValue(TEnum)`: O(1) array lookup or cached dictionary mapping to resolve a wrapper instance from the enum value.
+  - `TryParse(string, out TWrapper)` / `Parse(string)`: Smart text parsers matching against description, name, or numeric value.
+- **Operators & Conversions**:
+  - Overrides `ToString()` to return the `Description` property.
+  - Supports **implicit casting** from the wrapper class back to the original enum type (`TEnum`).
+  - Implements `==` and `!=` operators.
 
 ---
 
@@ -267,6 +297,17 @@ namespace MyApp
 
 这将自动为您在同命名空间下生成 `OrderStatusWrapper` 包装类。
 
+> [!TIP]
+> **（可选）自定义生成的类名与命名空间**
+> 这些配置是**完全可选的**。默认情况下，生成器会自动使用枚举所在的命名空间，并生成名为 `{EnumName}Wrapper` 的类。只有在您需要自定义生成的类名或命名空间时，才需要显式设置它们：
+> ```csharp
+> [GenerateEnumWrapper(WrapperClassName = "MyStatusWrapper", CustomNamespace = "MyCustomNamespace.Domain")]
+> public enum OrderStatus
+> {
+>     // ...
+> }
+> ```
+
 ##### 界面绑定 (WPF / Avalonia XAML)
 直接绑定至静态 `Items` 属性。由于 `ToString()` 被重写为返回 Description，**不需要写 `DisplayMemberPath`**：
 
@@ -297,6 +338,25 @@ if (OrderStatusWrapper.TryParse("pending", out var w2))
     Console.WriteLine(w2.Description); // 输出 "等待付款"
 }
 ```
+
+##### 生成的包装类 API 结构
+
+生成的类是一个实现了 `IEquatable<T>` 的 `partial class`，这使得您可以通过定义同名的 partial 类轻松扩展自定义成员。生成的类包含以下核心 API：
+
+- **实例属性**：
+  - `Value`：原始的枚举值类型（例如 `OrderStatus`）。
+  - `Description`：人类可读的友好描述（依次从 `[Description]`、`[Display(Name = ...)]` 获取，默认回退为字段名称）。
+  - `UnderlyingValue`：该枚举值对应的底层数值，类型与枚举的底层类型一致（例如 `byte`、`int`、`long`）。
+  - `GroupName`：在 `[Display(GroupName = ...)]` 中指定的分组类别名称（未指定时返回 `null`）。
+- **静态属性**：
+  - `Items`：一个只读列表 `IReadOnlyList<T>`，包含所有排序后的包装类实例（非常适合直接绑定至 UI 控件）。
+- **静态方法**：
+  - `FromValue(TEnum)`：将原始枚举值转换为对应的包装类实例（支持 O(1) 数组寻址或缓存字典查表优化）。
+  - `TryParse(string, out TWrapper)` / `Parse(string)`：智能文本解析方法，支持通过描述、名字或数字还原。
+- **运算符与转换**：
+  - 重写了 `ToString()` 方法，直接返回 `Description`。
+  - 支持**隐式转换**，可直接将包装类实例隐式转换为原始枚举类型（`TEnum`）。
+  - 实现了重载的 `==` 和 `!=` 比较运算符。
 
 ---
 
