@@ -30,4 +30,5 @@ jobs:
         run: dotnet pack src/EnumWrapper.SourceGenerators/EnumWrapper.SourceGenerators.csproj --configuration Release --no-build --output nupkgs
 
       - name: Push to NuGet
+        shell: bash
         run: dotnet nuget push nupkgs/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
