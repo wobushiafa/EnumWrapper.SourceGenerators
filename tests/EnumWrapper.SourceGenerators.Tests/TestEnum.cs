@@ -55,4 +55,43 @@ namespace TestNamespace
         [System.ComponentModel.DataAnnotations.Display(Name = "Value C", Order = 20, GroupName = "Group 2")]
         C = 3
     }
+
+    /// <summary>
+    /// Test enum that uses Display with ShortName attribute.
+    /// </summary>
+    [GenerateEnumWrapper]
+    public enum ShortNameEnum
+    {
+        [System.ComponentModel.DataAnnotations.Display(Name = "First Value", ShortName = "1st")]
+        First,
+
+        [System.ComponentModel.DataAnnotations.Display(Name = "Second Value", ShortName = "2nd")]
+        Second,
+
+        [System.ComponentModel.DataAnnotations.Display(Name = "Third Value", ShortName = "3rd")]
+        Third
+    }
+
+    // Non-contiguous enum (values 10, 20, 30) to test dictionary fallback
+    [GenerateEnumWrapper]
+    public enum NonContiguousEnum
+    {
+        [System.ComponentModel.Description("Ten")]
+        Item10 = 10,
+        [System.ComponentModel.Description("Twenty")]
+        Item20 = 20,
+        [System.ComponentModel.Description("Thirty")]
+        Item30 = 30
+    }
+
+    // Enum with Display attribute but only GroupName/Order, no explicit Name
+    [GenerateEnumWrapper]
+    public enum GroupOnlyEnum
+    {
+        [System.ComponentModel.DataAnnotations.Display(GroupName = "Alpha", Order = 2)]
+        First,
+
+        [System.ComponentModel.DataAnnotations.Display(GroupName = "Beta", Order = 1)]
+        Second
+    }
 }

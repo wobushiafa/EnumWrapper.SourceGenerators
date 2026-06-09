@@ -1,8 +1,8 @@
 using System;
 using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.Json;
 using EnumWrapper.SourceGenerators;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -21,6 +21,9 @@ namespace TestNamespace
             Assert.AreEqual(3, SortedEnumWrapper.Items.Count);
             Assert.AreEqual(7, DayOfWeekWrapper.Items.Count);
             Assert.AreEqual(2, SearchOptionWrapper.Items.Count);
+            Assert.AreEqual(3, ShortNameEnumWrapper.Items.Count);
+            Assert.AreEqual(3, NonContiguousEnumWrapper.Items.Count);
+            Assert.AreEqual(2, GroupOnlyEnumWrapper.Items.Count);
         }
 
         [TestMethod]
@@ -44,6 +47,11 @@ namespace TestNamespace
             var wrapper = TestEnumWrapper.FromValue(TestEnum.Second);
             TestEnum value = wrapper;
             Assert.AreEqual(TestEnum.Second, value);
+
+            // Also test that null wrapper casts to default
+            TestEnumWrapper? nullWrapper = null;
+            TestEnum defaultVal = nullWrapper;
+            Assert.AreEqual(default(TestEnum), defaultVal);
         }
 
         [TestMethod]
@@ -57,9 +65,13 @@ namespace TestNamespace
             Assert.IsTrue(w1 == w2);
             Assert.IsFalse(w1 == w3);
             Assert.IsFalse(w1.Equals(null));
-            
+
             // Check dictionary caching returns the exact same object reference for standard members
             Assert.AreSame(w1, w2);
+
+            // Inequality operator
+            Assert.IsTrue(w1 != w3);
+            Assert.IsFalse(w1 != w2);
         }
 
         [TestMethod]
@@ -105,6 +117,46 @@ namespace TestNamespace
         }
 
         [TestMethod]
+        public void TestTryParseEdgeCases()
+        {
+            // null input
+            Assert.IsFalse(TestEnumWrapper.TryParse(null, out var result1));
+            Assert.IsNull(result1);
+
+            // empty string
+            Assert.IsFalse(TestEnumWrapper.TryParse("", out var result2));
+            Assert.IsNull(result2);
+
+            // whitespace string (not empty, but no match)
+            Assert.IsFalse(TestEnumWrapper.TryParse("   ", out var result3));
+            Assert.IsNull(result3);
+        }
+
+        [TestMethod]
+        public void TestParseThrowsOnInvalid()
+        {
+            try
+            {
+                TestEnumWrapper.Parse("ThisDoesNotExist");
+                Assert.Fail("Expected ArgumentException was not thrown");
+            }
+            catch (ArgumentException)
+            {
+                // Expected
+            }
+        }
+
+        [TestMethod]
+        public void TestParseSuccess()
+        {
+            var result = TestEnumWrapper.Parse("Second Value Display");
+            Assert.AreEqual(TestEnum.Second, result.Value);
+
+            var byName = TestEnumWrapper.Parse("third");
+            Assert.AreEqual(TestEnum.Third, byName.Value);
+        }
+
+        [TestMethod]
         public void TestFlagsSupport()
         {
             // 1. None flag
@@ -123,7 +175,12 @@ namespace TestNamespace
             Assert.IsTrue(all.HasFlag(UserPermissions.Execute));
             Assert.IsFalse(readWrite.HasFlag(UserPermissions.Execute));
 
-            // 4. GetFlags list representation (active components)
+            // 4. HasFlag with wrapper argument
+            var readWrapper = UserPermissionsWrapper.FromValue(UserPermissions.Read);
+            Assert.IsTrue(all.HasFlag(readWrapper));
+            Assert.IsFalse(readWrite.HasFlag(UserPermissionsWrapper.FromValue(UserPermissions.Execute)));
+
+            // 5. GetFlags list representation (active components)
             var activeFlags = all.GetFlags().ToList();
             Assert.AreEqual(3, activeFlags.Count);
             Assert.IsTrue(activeFlags.Any(f => f.Value == UserPermissions.Read));
@@ -169,6 +226,17 @@ namespace TestNamespace
             var result2 = converter.ConvertFrom("Second") as TestEnumWrapper;
             Assert.IsNotNull(result2);
             Assert.AreEqual(TestEnum.Second, result2.Value);
+
+            // ConvertFrom with invalid string should throw
+            try
+            {
+                converter.ConvertFrom("NonExistentValue");
+                Assert.Fail("Expected ArgumentException was not thrown");
+            }
+            catch (ArgumentException)
+            {
+                // Expected
+            }
         }
 
         [TestMethod]
@@ -177,7 +245,7 @@ namespace TestNamespace
             // SortedEnum has A (Order=10), B (Order=5), C (Order=20)
             // The items list must be sorted by Order ascending: B, A, C
             var items = SortedEnumWrapper.Items;
-            
+
             Assert.AreEqual(SortedEnum.B, items[0].Value);
             Assert.AreEqual(SortedEnum.A, items[1].Value);
             Assert.AreEqual(SortedEnum.C, items[2].Value);
@@ -203,6 +271,119 @@ namespace TestNamespace
             var execute = UserPermissionsWrapper.FromValue(UserPermissions.Execute);
             Assert.AreEqual(UserPermissions.Read, read.Value);
             Assert.AreEqual(UserPermissions.Execute, execute.Value);
+        }
+
+        [TestMethod]
+        public void TestFromValueWithNonContiguousEnum()
+        {
+            // NonContiguousEnum has values 10, 20, 30
+            var ten = NonContiguousEnumWrapper.FromValue(NonContiguousEnum.Item10);
+            Assert.AreEqual(NonContiguousEnum.Item10, ten.Value);
+            Assert.AreEqual("Ten", ten.Description);
+
+            var thirty = NonContiguousEnumWrapper.FromValue(NonContiguousEnum.Item30);
+            Assert.AreEqual(NonContiguousEnum.Item30, thirty.Value);
+            Assert.AreEqual("Thirty", thirty.Description);
+
+            // FromValue with unknown value should create a fallback wrapper (not throw)
+            var unknown = NonContiguousEnumWrapper.FromValue((NonContiguousEnum)42);
+            Assert.AreEqual((NonContiguousEnum)42, unknown.Value);
+        }
+
+        [TestMethod]
+        public void TestGroupOnlyEnumDefaults()
+        {
+            // GroupOnlyEnum items have Display with GroupName/Order but no Name.
+            // Description should fall back to the field name.
+            var first = GroupOnlyEnumWrapper.FromValue(GroupOnlyEnum.First);
+            Assert.AreEqual("First", first.Description);
+            Assert.AreEqual("Alpha", first.GroupName);
+
+            var second = GroupOnlyEnumWrapper.FromValue(GroupOnlyEnum.Second);
+            Assert.AreEqual("Second", second.Description);
+            Assert.AreEqual("Beta", second.GroupName);
+
+            // Items should be sorted by Order: Second (Order=1) before First (Order=2)
+            Assert.AreEqual(GroupOnlyEnum.Second, GroupOnlyEnumWrapper.Items[0].Value);
+            Assert.AreEqual(GroupOnlyEnum.First, GroupOnlyEnumWrapper.Items[1].Value);
+        }
+
+        [TestMethod]
+        public void TestShortNameProperty()
+        {
+            // Verify ShortName property exists on wrappers generated from enums that use it
+            var shortNameProp = typeof(ShortNameEnumWrapper).GetProperty("ShortName");
+            Assert.IsNotNull(shortNameProp, "ShortName property should be generated");
+            Assert.AreEqual(typeof(string), shortNameProp!.PropertyType);
+
+            // Verify ShortName values
+            var first = ShortNameEnumWrapper.FromValue(ShortNameEnum.First);
+            Assert.AreEqual("1st", first.ShortName);
+            Assert.AreEqual("First Value", first.Description);
+
+            var second = ShortNameEnumWrapper.FromValue(ShortNameEnum.Second);
+            Assert.AreEqual("2nd", second.ShortName);
+
+            var third = ShortNameEnumWrapper.FromValue(ShortNameEnum.Third);
+            Assert.AreEqual("3rd", third.ShortName);
+        }
+
+        [TestMethod]
+        public void TestShortNamePropertyNotGeneratedWhenUnused()
+        {
+            // TestEnum does not use ShortName, so ShortNameEnumWrapper should not have it
+            var shortNameProp = typeof(TestEnumWrapper).GetProperty("ShortName");
+            Assert.IsNull(shortNameProp, "ShortName property should NOT be generated when no enum member uses it");
+        }
+
+        [TestMethod]
+        public void TestItemsNotNull()
+        {
+            var items = TestEnumWrapper.Items;
+            Assert.IsNotNull(items);
+        }
+
+        [TestMethod]
+        public void TestUnderlyingValueType()
+        {
+            // UserPermissions has underlying type byte
+            var read = UserPermissionsWrapper.FromValue(UserPermissions.Read);
+            Assert.AreEqual(typeof(byte), read.UnderlyingValue.GetType());
+
+            // TestEnum has default underlying type int
+            var first = TestEnumWrapper.FromValue(TestEnum.First);
+            Assert.AreEqual(typeof(int), first.UnderlyingValue.GetType());
+        }
+
+        [TestMethod]
+        public void TestIReadOnlyListInterface()
+        {
+            // Verify Items implements IReadOnlyList (or at least is indexable with Count)
+            var items = TestEnumWrapper.Items;
+            Assert.IsTrue(items.Count > 0);
+            for (int i = 0; i < items.Count; i++)
+            {
+                Assert.IsNotNull(items[i]);
+            }
+        }
+
+        [TestMethod]
+        public void TestEqualityWithDifferentEnumTypes()
+        {
+            var testFirst = TestEnumWrapper.FromValue(TestEnum.First);
+            var nonContigTen = NonContiguousEnumWrapper.FromValue(NonContiguousEnum.Item10);
+
+            // Different wrapper types should not be equal via object.Equals
+            Assert.IsFalse(testFirst.Equals((object?)nonContigTen));
+        }
+
+        [TestMethod]
+        public void TestFromValueFallbackWithUnknown()
+        {
+            // Non-enum value should still produce a wrapper with fallback description
+            var unknown = TestEnumWrapper.FromValue((TestEnum)999);
+            Assert.AreEqual((TestEnum)999, unknown.Value);
+            Assert.AreEqual("999", unknown.Description);
         }
     }
 }
