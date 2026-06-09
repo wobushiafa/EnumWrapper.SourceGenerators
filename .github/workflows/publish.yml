@@ -26,6 +26,9 @@ jobs:
       - name: Build Solution
         run: dotnet build --configuration Release --no-restore
 
+      - name: Run Tests
+        run: dotnet test --configuration Release --no-build --verbosity normal
+
       - name: Pack Generator
         run: dotnet pack src/EnumWrapper.SourceGenerators/EnumWrapper.SourceGenerators.csproj --configuration Release --no-build --output nupkgs
 
