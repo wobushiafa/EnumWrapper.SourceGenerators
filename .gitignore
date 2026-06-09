@@ -2,7 +2,7 @@
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
-[Re]leasePublic/
+[Rr]eleasePublic/
 x64/
 x86/
 build/
@@ -14,16 +14,7 @@ obj/
 *.user
 *.userosscache
 *.sln.docstates
-
-## User-specific files
 *.suo
-*.user
-*.userosscache
-*.sln.docstates
-*.suo
-*.user
-*.userosscache
-*.sln.docstates
 
 ## Rider & VS Code
 .idea/
@@ -32,3 +23,8 @@ obj/
 ## Publish output
 publish/
 *.publish.xml
+
+# MSTest test Results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.trx
