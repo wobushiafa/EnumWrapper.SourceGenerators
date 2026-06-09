@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/samples/">
+    <Project Path="samples/EnumWrapper.SourceGenerators.Sample/EnumWrapper.SourceGenerators.Sample.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/EnumWrapper.SourceGenerators/EnumWrapper.SourceGenerators.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/EnumWrapper.SourceGenerators.Tests/EnumWrapper.SourceGenerators.Tests.csproj" />
+  </Folder>
+</Solution>

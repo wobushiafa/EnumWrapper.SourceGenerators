@@ -1,0 +1,218 @@
+<Window x:Class="EnumWrapper.SourceGenerators.Sample.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:EnumWrapper.SourceGenerators.Sample"
+        mc:Ignorable="d"
+        Title="EnumWrapper.SourceGenerators WPF Demo" 
+        Height="820" Width="1050"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BgBrush}">
+
+    <Window.Resources>
+        <!-- Modern Card Style with Soft Drop Shadow -->
+        <Style x:Key="ModernCard" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource CardBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="24"/>
+            <Setter Property="Margin" Value="16,8"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#0F172A" Opacity="0.04" BlurRadius="12" ShadowDepth="2"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Subheading Style -->
+        <Style x:Key="SubHeadingText" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#1E293B"/> <!-- Slate 800 -->
+            <Setter Property="Margin" Value="0,0,0,16"/>
+        </Style>
+
+        <!-- Small Title for Controls -->
+        <Style x:Key="ControlLabel" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" BorderThickness="0,0,0,1" BorderBrush="{StaticResource BorderBrush}" Padding="40,24">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                    <GradientStop Color="#4F46E5" Offset="0.0"/> <!-- Indigo 600 -->
+                    <GradientStop Color="#7C3AED" Offset="1.0"/> <!-- Violet 600 -->
+                </LinearGradientBrush>
+            </Border.Background>
+            <StackPanel Orientation="Vertical">
+                <TextBlock Text="EnumWrapper.SourceGenerators" FontSize="26" FontWeight="Bold" Foreground="White"/>
+                <TextBlock Text="C# Source Generator Demo - Highly readable model wrapping for seamless ComboBox/ListBox binding" 
+                           FontSize="14" Foreground="#E0E7FF" Margin="0,6,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- 2. Main Content Grid -->
+        <Grid Grid.Row="1" Margin="24,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Column 1: Local Enum (OrderStatus) -->
+            <Border Grid.Column="0" Style="{StaticResource ModernCard}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/> <!-- Section Title -->
+                        <RowDefinition Height="Auto"/> <!-- ComboBox Block -->
+                        <RowDefinition Height="*"/>    <!-- ListBox Block -->
+                        <RowDefinition Height="Auto"/> <!-- Details Panel -->
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="1. Local Enum (OrderStatus)" Style="{StaticResource SubHeadingText}"/>
+
+                    <StackPanel Grid.Row="1" Margin="0,0,0,20">
+                        <TextBlock Text="ComboBox Binding (Default ToString() returns Description)" Style="{StaticResource ControlLabel}"/>
+                        <!-- SelectedValue is bound to the OrderStatus enum, SelectedValuePath specifies the Value property of the wrapper -->
+                        <ComboBox ItemsSource="{x:Static local:OrderStatusWrapper.Items}"
+                                  SelectedValue="{Binding SelectedStatus, Mode=TwoWay}"
+                                  SelectedValuePath="Value"
+                                  BorderBrush="{StaticResource BorderBrush}"/>
+                    </StackPanel>
+
+                    <Grid Grid.Row="2" Margin="0,0,0,24">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Text="ListBox Binding (Visualizing Selection)" Style="{StaticResource ControlLabel}"/>
+                        <ListBox Grid.Row="1" 
+                                 ItemsSource="{x:Static local:OrderStatusWrapper.Items}"
+                                 SelectedValue="{Binding SelectedStatus, Mode=TwoWay}"
+                                 SelectedValuePath="Value"
+                                 VerticalAlignment="Stretch"/>
+                    </Grid>
+
+                    <!-- Selected Detail Card -->
+                    <Border Grid.Row="3" Background="#EEF2FF" BorderBrush="#C7D2FE" BorderThickness="1" CornerRadius="8" Padding="20">
+                        <StackPanel>
+                            <TextBlock Text="Selection Details" FontSize="14" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" Margin="0,0,0,12"/>
+                            
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Enum Value:" Foreground="{StaticResource TextMutedBrush}" FontWeight="SemiBold" Margin="0,4,16,4"/>
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedStatus}" Foreground="#1E293B" FontWeight="Bold" Margin="0,4,0,4"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Description:" Foreground="{StaticResource TextMutedBrush}" FontWeight="SemiBold" Margin="0,4,16,4"/>
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedStatusWrapper.Description}" Foreground="#1E293B" FontWeight="Bold" Margin="0,4,0,4"/>
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Model Type:" Foreground="{StaticResource TextMutedBrush}" FontWeight="SemiBold" Margin="0,4,16,4"/>
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="OrderStatusWrapper" Foreground="{StaticResource TextMutedBrush}" FontSize="13" Margin="0,4,0,4"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Column 2: External BCL Enum (System.IO.FileMode) -->
+            <Border Grid.Column="1" Style="{StaticResource ModernCard}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="2. External BCL Enum (System.IO.FileMode)" Style="{StaticResource SubHeadingText}"/>
+
+                    <StackPanel Grid.Row="1" Margin="0,0,0,20">
+                        <TextBlock Text="ComboBox Binding (Wrapped from System.IO.dll)" Style="{StaticResource ControlLabel}"/>
+                        <ComboBox ItemsSource="{x:Static local:FileModeWrapper.Items}"
+                                  SelectedValue="{Binding SelectedFileMode, Mode=TwoWay}"
+                                  SelectedValuePath="Value"/>
+                    </StackPanel>
+
+                    <Grid Grid.Row="2" Margin="0,0,0,24">
+                        <StackPanel>
+                            <TextBlock Text="Usage Context" Style="{StaticResource ControlLabel}"/>
+                            <Border Background="#F8FAFC" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="16">
+                                <TextBlock Text="System.IO.FileMode is an external enum from the Base Class Library. By declaring [assembly: GenerateEnumWrapperFor(...)] in AssemblyInfo.cs, the source generator creates a strong-typed model during compilation, making external enums just as easy to bind as local ones."
+                                           Foreground="#475569" TextWrapping="Wrap" LineHeight="20" FontSize="13"/>
+                                </Border>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Selected Detail Card -->
+                    <Border Grid.Row="3" Background="#F0FDF4" BorderBrush="#BBF7D0" BorderThickness="1" CornerRadius="8" Padding="20">
+                        <StackPanel>
+                            <TextBlock Text="Selection Details" FontSize="14" FontWeight="Bold" Foreground="#16A34A" Margin="0,0,0,12"/>
+                            
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Enum Value:" Foreground="{StaticResource TextMutedBrush}" FontWeight="SemiBold" Margin="0,4,16,4"/>
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedFileMode}" Foreground="#1E293B" FontWeight="Bold" Margin="0,4,0,4"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Description:" Foreground="{StaticResource TextMutedBrush}" FontWeight="SemiBold" Margin="0,4,16,4"/>
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedFileModeWrapper.Description}" Foreground="#1E293B" FontWeight="Bold" Margin="0,4,0,4"/>
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Model Type:" Foreground="{StaticResource TextMutedBrush}" FontWeight="SemiBold" Margin="0,4,16,4"/>
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="FileModeWrapper" Foreground="{StaticResource TextMutedBrush}" FontSize="13" Margin="0,4,0,4"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- 3. Bottom Actions Panel -->
+        <Border Grid.Row="2" Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Padding="32,20">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <TextBlock Grid.Column="0" Text="Programmatic Control:" Foreground="{StaticResource TextMutedBrush}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Content="Set Status = Delivered (Code)" Click="SetDelivered_Click" Margin="0,0,12,0"/>
+                    <Button Content="Set FileMode = OpenOrCreate (Code)" Click="SetOpenOrCreate_Click" Margin="0,0,12,0" Background="#10B981"/>
+                </StackPanel>
+
+                <Button Grid.Column="2" Content="Reset Fields" Click="Reset_Click" Background="#64748B"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
