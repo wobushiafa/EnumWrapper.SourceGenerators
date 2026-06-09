@@ -25,13 +25,17 @@ Bilingual Documentation: [English](#english) | [中文说明](#chinese-documenta
 
 ### Installation
 
-Add the analyzer reference to your `.csproj` file:
+Install the package via NuGet:
+
+```bash
+dotnet add package EnumWrapper.SourceGenerators
+```
+
+Or reference it directly in your `.csproj` file as a development dependency:
 
 ```xml
 <ItemGroup>
-  <ProjectReference Include="path/to/EnumWrapper.SourceGenerators.csproj" 
-                    OutputItemType="Analyzer" 
-                    ReferenceOutputAssembly="false" />
+  <PackageReference Include="EnumWrapper.SourceGenerators" Version="1.0.0" PrivateAssets="all" />
 </ItemGroup>
 ```
 
@@ -208,13 +212,17 @@ var w2 = JsonSerializer.Deserialize<OrderStatusWrapper>("1"); // OrderStatus.Shi
 
 ### 安装
 
-将源生成器作为分析器引用至您的 `.csproj` 项目文件中：
+使用 NuGet 命令行安装包：
+
+```bash
+dotnet add package EnumWrapper.SourceGenerators
+```
+
+或者直接在您的 `.csproj` 项目文件中添加包引用（设为开发依赖项）：
 
 ```xml
 <ItemGroup>
-  <ProjectReference Include="path/to/EnumWrapper.SourceGenerators.csproj" 
-                    OutputItemType="Analyzer" 
-                    ReferenceOutputAssembly="false" />
+  <PackageReference Include="EnumWrapper.SourceGenerators" Version="1.0.0" PrivateAssets="all" />
 </ItemGroup>
 ```
 
