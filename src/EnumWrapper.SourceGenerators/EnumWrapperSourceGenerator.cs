@@ -755,8 +755,8 @@ namespace EnumWrapper.SourceGenerators
         {
             if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
-            return EqualityComparer<T>.Default.Equals(Value, other.Value) &&
-                   EqualityComparer<DiagnosticInfo>.Default.Equals(Diagnostic, other.Diagnostic);
+            return EqualityComparer<T?>.Default.Equals(Value, other.Value) &&
+                   EqualityComparer<DiagnosticInfo?>.Default.Equals(Diagnostic, other.Diagnostic);
         }
 
         public override bool Equals(object? obj) => Equals(obj as GeneratorResult<T>);
