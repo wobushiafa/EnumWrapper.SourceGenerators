@@ -147,6 +147,7 @@ namespace TestNamespace
             return new TestGenerationResult(
                 outputCompilation,
                 outputCompilation.GetDiagnostics(),
+                runResult.Results.Single().Diagnostics,
                 runResult.Results.Single().GeneratedSources);
         }
 
@@ -170,17 +171,20 @@ namespace TestNamespace
 
         private static void AssertDiagnostic(TestGenerationResult result, string diagnosticId)
         {
-            if (!result.Diagnostics.Any(d => d.Id == diagnosticId))
+            if (!result.AllDiagnostics.Any(d => d.Id == diagnosticId))
             {
-                Assert.Fail($"Expected diagnostic {diagnosticId}, but found:{Environment.NewLine}{string.Join(Environment.NewLine, result.Diagnostics.Select(static d => d.ToString()))}");
+                Assert.Fail($"Expected diagnostic {diagnosticId}, but found:{Environment.NewLine}{string.Join(Environment.NewLine, result.AllDiagnostics.Select(static d => d.ToString()))}");
             }
         }
 
         private sealed record TestGenerationResult(
             Compilation OutputCompilation,
             ImmutableArray<Diagnostic> Diagnostics,
+            ImmutableArray<Diagnostic> GeneratorDiagnostics,
             ImmutableArray<GeneratedSourceResult> GeneratedSources)
         {
+            public IEnumerable<Diagnostic> AllDiagnostics => Diagnostics.Concat(GeneratorDiagnostics);
+
             public string GetGeneratedSource(string hintName)
             {
                 foreach (var source in GeneratedSources)
