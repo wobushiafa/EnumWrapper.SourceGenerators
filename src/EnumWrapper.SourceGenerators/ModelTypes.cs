@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Immutable;
 using System.Linq;
+using Microsoft.CodeAnalysis;
 
 namespace EnumWrapper.SourceGenerators
 {
@@ -13,11 +14,13 @@ namespace EnumWrapper.SourceGenerators
         public string WrapperNamespace { get; }
         public ImmutableArray<EnumMemberInfo> Members { get; }
         public string UnderlyingTypeName { get; }
+        public bool IsUnsignedUnderlyingType { get; }
         public bool IsFlags { get; }
         public bool HasJson { get; }
         public bool IsContiguous { get; }
         public string XmlDocumentation { get; }
         public bool HasWpf { get; }
+        public Location DeclarationLocation { get; }
 
         public EnumToWrapInfo(
             string @namespace,
@@ -27,11 +30,13 @@ namespace EnumWrapper.SourceGenerators
             string wrapperNamespace,
             ImmutableArray<EnumMemberInfo> members,
             string underlyingTypeName,
+            bool isUnsignedUnderlyingType,
             bool isFlags,
             bool hasJson,
             bool isContiguous,
             string xmlDocumentation,
-            bool hasWpf)
+            bool hasWpf,
+            Location declarationLocation)
         {
             Namespace = @namespace;
             EnumName = enumName;
@@ -40,11 +45,13 @@ namespace EnumWrapper.SourceGenerators
             WrapperNamespace = wrapperNamespace;
             Members = members;
             UnderlyingTypeName = underlyingTypeName;
+            IsUnsignedUnderlyingType = isUnsignedUnderlyingType;
             IsFlags = isFlags;
             HasJson = hasJson;
             IsContiguous = isContiguous;
             XmlDocumentation = xmlDocumentation;
             HasWpf = hasWpf;
+            DeclarationLocation = declarationLocation;
         }
 
         public bool Equals(EnumToWrapInfo? other)
@@ -57,6 +64,7 @@ namespace EnumWrapper.SourceGenerators
                    WrapperClassName == other.WrapperClassName &&
                    WrapperNamespace == other.WrapperNamespace &&
                    UnderlyingTypeName == other.UnderlyingTypeName &&
+                   IsUnsignedUnderlyingType == other.IsUnsignedUnderlyingType &&
                    IsFlags == other.IsFlags &&
                    HasJson == other.HasJson &&
                    IsContiguous == other.IsContiguous &&
@@ -78,6 +86,7 @@ namespace EnumWrapper.SourceGenerators
                 hash = hash * 23 + WrapperClassName.GetHashCode();
                 hash = hash * 23 + WrapperNamespace.GetHashCode();
                 hash = hash * 23 + UnderlyingTypeName.GetHashCode();
+                hash = hash * 23 + IsUnsignedUnderlyingType.GetHashCode();
                 hash = hash * 23 + IsFlags.GetHashCode();
                 hash = hash * 23 + HasJson.GetHashCode();
                 hash = hash * 23 + IsContiguous.GetHashCode();
@@ -99,10 +108,10 @@ namespace EnumWrapper.SourceGenerators
         public string? ShortName { get; }
         public int? Order { get; }
         public string? GroupName { get; }
-        public long NumericValue { get; }
+        public decimal NumericValue { get; }
         public string XmlDocumentation { get; }
 
-        public EnumMemberInfo(string name, string description, string? shortName, int? order, string? groupName, long numericValue, string xmlDocumentation)
+        public EnumMemberInfo(string name, string description, string? shortName, int? order, string? groupName, decimal numericValue, string xmlDocumentation)
         {
             Name = name;
             Description = description;

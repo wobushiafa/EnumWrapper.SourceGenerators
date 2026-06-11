@@ -390,10 +390,20 @@ namespace EnumWrapper.SourceGenerators
                 sb.AppendLine($"{indent}            }}");
                 sb.AppendLine($"{indent}            else if (reader.TokenType == System.Text.Json.JsonTokenType.Number)");
                 sb.AppendLine($"{indent}            {{");
-                sb.AppendLine($"{indent}                if (reader.TryGetInt64(out var num))");
-                sb.AppendLine($"{indent}                {{");
-                sb.AppendLine($"                    return FromValue(({enumInfo.EnumFullName})num);");
-                sb.AppendLine($"{indent}                }}");
+                if (enumInfo.IsUnsignedUnderlyingType)
+                {
+                    sb.AppendLine($"{indent}                if (reader.TryGetUInt64(out var num))");
+                    sb.AppendLine($"{indent}                {{");
+                    sb.AppendLine($"{indent}                    return FromValue(({enumInfo.EnumFullName})({enumInfo.UnderlyingTypeName})num);");
+                    sb.AppendLine($"{indent}                }}");
+                }
+                else
+                {
+                    sb.AppendLine($"{indent}                if (reader.TryGetInt64(out var num))");
+                    sb.AppendLine($"{indent}                {{");
+                    sb.AppendLine($"{indent}                    return FromValue(({enumInfo.EnumFullName})({enumInfo.UnderlyingTypeName})num);");
+                    sb.AppendLine($"{indent}                }}");
+                }
                 sb.AppendLine($"{indent}            }}");
                 sb.AppendLine($"{indent}            throw new System.Text.Json.JsonException($\"Cannot deserialize {enumInfo.WrapperClassName} from current token.\");");
                 sb.AppendLine($"{indent}        }}");

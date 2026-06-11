@@ -24,6 +24,8 @@ namespace TestNamespace
             Assert.AreEqual(3, ShortNameEnumWrapper.Items.Count);
             Assert.AreEqual(3, NonContiguousEnumWrapper.Items.Count);
             Assert.AreEqual(2, GroupOnlyEnumWrapper.Items.Count);
+            Assert.AreEqual(3, LargeUnsignedEnumWrapper.Items.Count);
+            Assert.AreEqual(3, SignedLongEnumWrapper.Items.Count);
         }
 
         [TestMethod]
@@ -384,6 +386,43 @@ namespace TestNamespace
             var unknown = TestEnumWrapper.FromValue((TestEnum)999);
             Assert.AreEqual((TestEnum)999, unknown.Value);
             Assert.AreEqual("999", unknown.Description);
+        }
+
+        [TestMethod]
+        public void TestUnsignedLongBackedEnumGeneration()
+        {
+            var high = LargeUnsignedEnumWrapper.FromValue(LargeUnsignedEnum.High);
+            Assert.AreEqual(LargeUnsignedEnum.High, high.Value);
+            Assert.AreEqual("High Unsigned Value", high.Description);
+            Assert.AreEqual(9223372036854775808UL, high.UnderlyingValue);
+
+            var max = LargeUnsignedEnumWrapper.FromValue(LargeUnsignedEnum.Max);
+            Assert.AreEqual(ulong.MaxValue, max.UnderlyingValue);
+            Assert.AreEqual("Max", max.Description);
+        }
+
+        [TestMethod]
+        public void TestJsonSerializationForLargeUnsignedEnum()
+        {
+            var deserializedHigh = JsonSerializer.Deserialize<LargeUnsignedEnumWrapper>("18446744073709551615");
+            Assert.IsNotNull(deserializedHigh);
+            Assert.AreEqual(LargeUnsignedEnum.Max, deserializedHigh.Value);
+
+            var deserializedByName = JsonSerializer.Deserialize<LargeUnsignedEnumWrapper>("\"High\"");
+            Assert.IsNotNull(deserializedByName);
+            Assert.AreEqual(LargeUnsignedEnum.High, deserializedByName.Value);
+        }
+
+        [TestMethod]
+        public void TestJsonSerializationForSignedLongEnum()
+        {
+            var deserializedMin = JsonSerializer.Deserialize<SignedLongEnumWrapper>("-9223372036854775808");
+            Assert.IsNotNull(deserializedMin);
+            Assert.AreEqual(SignedLongEnum.Min, deserializedMin.Value);
+
+            var deserializedMax = JsonSerializer.Deserialize<SignedLongEnumWrapper>("9223372036854775807");
+            Assert.IsNotNull(deserializedMax);
+            Assert.AreEqual(SignedLongEnum.Max, deserializedMax.Value);
         }
     }
 }

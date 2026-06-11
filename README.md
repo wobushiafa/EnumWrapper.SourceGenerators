@@ -36,7 +36,7 @@ Or reference it directly in your `.csproj` file as a development dependency:
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="EnumWrapper.SourceGenerators" Version="1.1.0" PrivateAssets="all" />
+  <PackageReference Include="EnumWrapper.SourceGenerators" Version="1.1.1" PrivateAssets="all" />
 </ItemGroup>
 ```
 
@@ -255,7 +255,7 @@ dotnet add package EnumWrapper.SourceGenerators
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="EnumWrapper.SourceGenerators" Version="1.1.0" PrivateAssets="all" />
+  <PackageReference Include="EnumWrapper.SourceGenerators" Version="1.1.1" PrivateAssets="all" />
 </ItemGroup>
 ```
 

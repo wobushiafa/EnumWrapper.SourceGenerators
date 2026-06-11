@@ -1,7 +1,5 @@
-using System.Collections.Immutable;
 using System.Text;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
@@ -46,57 +44,23 @@ namespace EnumWrapper.SourceGenerators
                 "GenerateEnumWrapperAttributes.g.cs",
                 SourceText.From(AttributeSource, Encoding.UTF8)));
 
-            // 2. Syntax provider for local enums
-            var localEnums = context.SyntaxProvider.CreateSyntaxProvider(
+            // 2. Attribute-based provider for local declarations
+            var localEnums = context.SyntaxProvider.ForAttributeWithMetadataName(
+                "EnumWrapper.SourceGenerators.GenerateEnumWrapperAttribute",
                 predicate: static (node, _) => node is BaseTypeDeclarationSyntax,
                 transform: static (ctx, cancellationToken) => EnumInfoExtractor.GetEnumToWrap(ctx, cancellationToken)
-            ).Where(static x => x is not null);
+            )
+            .Where(static x => x is not null)
+            .Select(static (result, _) => result!);
 
             // 3. Compilation provider for assembly level attributes
             var assemblyEnums = context.CompilationProvider.Select((compilation, cancellationToken) =>
                 EnumInfoExtractor.GetAssemblyEnumsToWrap(compilation, cancellationToken));
 
-            var assemblyEnumsFlat = assemblyEnums.SelectMany((list, _) => list);
-
             // 4. Register output generation
-            context.RegisterSourceOutput(localEnums, static (spc, result) =>
+            context.RegisterSourceOutput(localEnums.Collect().Combine(assemblyEnums), static (spc, source) =>
             {
-                if (result!.Diagnostic != null)
-                {
-                    var desc = new DiagnosticDescriptor(
-                        result.Diagnostic.Id,
-                        "EnumWrapper.SourceGenerators Error",
-                        result.Diagnostic.Message,
-                        "Usage",
-                        result.Diagnostic.Severity,
-                        isEnabledByDefault: true);
-                    spc.ReportDiagnostic(Diagnostic.Create(desc, result.Diagnostic.Location));
-                    return;
-                }
-                if (result.Value != null)
-                {
-                    CodeWriter.GenerateWrapper(spc, result.Value);
-                }
-            });
-
-            context.RegisterSourceOutput(assemblyEnumsFlat, static (spc, result) =>
-            {
-                if (result!.Diagnostic != null)
-                {
-                    var desc = new DiagnosticDescriptor(
-                        result.Diagnostic.Id,
-                        "EnumWrapper.SourceGenerators Error",
-                        result.Diagnostic.Message,
-                        "Usage",
-                        result.Diagnostic.Severity,
-                        isEnabledByDefault: true);
-                    spc.ReportDiagnostic(Diagnostic.Create(desc, result.Diagnostic.Location));
-                    return;
-                }
-                if (result.Value != null)
-                {
-                    CodeWriter.GenerateWrapper(spc, result.Value);
-                }
+                GenerationPlanner.EmitSources(spc, source.Left, source.Right);
             });
         }
     }

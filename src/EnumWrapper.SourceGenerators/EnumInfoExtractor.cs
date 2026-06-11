@@ -4,36 +4,22 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace EnumWrapper.SourceGenerators
 {
     internal static class EnumInfoExtractor
     {
-        public static GeneratorResult<EnumToWrapInfo>? GetEnumToWrap(GeneratorSyntaxContext ctx, CancellationToken cancellationToken)
+        public static GeneratorResult<EnumToWrapInfo>? GetEnumToWrap(GeneratorAttributeSyntaxContext ctx, CancellationToken cancellationToken)
         {
-            var typeDeclaration = (BaseTypeDeclarationSyntax)ctx.Node;
-            var symbol = ctx.SemanticModel.GetDeclaredSymbol(typeDeclaration, cancellationToken) as INamedTypeSymbol;
-            if (symbol is null) return null;
+            if (ctx.TargetSymbol is not INamedTypeSymbol symbol) return null;
 
-            AttributeData? targetAttr = null;
-            foreach (var attr in symbol.GetAttributes())
-            {
-                if (attr.AttributeClass is { } attrClass &&
-                    attrClass.ToDisplayString() == "EnumWrapper.SourceGenerators.GenerateEnumWrapperAttribute")
-                {
-                    targetAttr = attr;
-                    break;
-                }
-            }
-
-            if (targetAttr == null) return null;
+            var targetAttr = ctx.Attributes[0];
 
             // EWG001: Applied to a non-enum type
             if (symbol.TypeKind != TypeKind.Enum)
             {
-                var location = typeDeclaration.Identifier.GetLocation();
+                var location = symbol.Locations.FirstOrDefault() ?? Location.None;
                 var diag = new DiagnosticInfo(
                     "EWG001",
                     $"The [GenerateEnumWrapper] attribute can only be applied to enum types. '{symbol.Name}' is a {symbol.TypeKind.ToString().ToLower()}.",
@@ -57,7 +43,13 @@ namespace EnumWrapper.SourceGenerators
             var hasJson = compilation.GetTypeByMetadataName("System.Text.Json.Serialization.JsonConverterAttribute") != null;
             var hasWpf = compilation.GetTypeByMetadataName("System.Windows.Data.IValueConverter") != null;
 
-            var info = ExtractEnumInfo(symbol, wrapperClassName, customNamespace, hasJson, hasWpf);
+            var info = ExtractEnumInfo(
+                symbol,
+                wrapperClassName,
+                customNamespace,
+                hasJson,
+                hasWpf,
+                symbol.Locations.FirstOrDefault() ?? Location.None);
             return new GeneratorResult<EnumToWrapInfo>(info);
         }
 
@@ -104,7 +96,13 @@ namespace EnumWrapper.SourceGenerators
                                 customNamespace = namedArg.Value.Value as string;
                         }
 
-                        var info = ExtractEnumInfo(typeArg, wrapperClassName, customNamespace, hasJson, hasWpf);
+                        var info = ExtractEnumInfo(
+                            typeArg,
+                            wrapperClassName,
+                            customNamespace,
+                            hasJson,
+                            hasWpf,
+                            attr.ApplicationSyntaxReference?.GetSyntax(cancellationToken).GetLocation() ?? Location.None);
                         list.Add(new GeneratorResult<EnumToWrapInfo>(info));
                     }
                 }
@@ -112,7 +110,13 @@ namespace EnumWrapper.SourceGenerators
             return list.ToImmutable();
         }
 
-        public static EnumToWrapInfo ExtractEnumInfo(INamedTypeSymbol enumSymbol, string? wrapperClassName, string? customNamespace, bool hasJson, bool hasWpf)
+        public static EnumToWrapInfo ExtractEnumInfo(
+            INamedTypeSymbol enumSymbol,
+            string? wrapperClassName,
+            string? customNamespace,
+            bool hasJson,
+            bool hasWpf,
+            Location declarationLocation)
         {
             var enumName = enumSymbol.Name;
             var enumNamespace = enumSymbol.ContainingNamespace.IsGlobalNamespace
@@ -131,6 +135,7 @@ namespace EnumWrapper.SourceGenerators
 
             // Detect underlying type
             var underlyingTypeName = "int";
+            var isUnsignedUnderlyingType = false;
             var underlyingType = enumSymbol.EnumUnderlyingType;
             if (underlyingType != null)
             {
@@ -145,6 +150,15 @@ namespace EnumWrapper.SourceGenerators
                     SpecialType.System_Int64 => "long",
                     SpecialType.System_UInt64 => "ulong",
                     _ => underlyingType.ToDisplayString()
+                };
+
+                isUnsignedUnderlyingType = underlyingType.SpecialType switch
+                {
+                    SpecialType.System_Byte => true,
+                    SpecialType.System_UInt16 => true,
+                    SpecialType.System_UInt32 => true,
+                    SpecialType.System_UInt64 => true,
+                    _ => false
                 };
             }
 
@@ -199,11 +213,7 @@ namespace EnumWrapper.SourceGenerators
                     }
 
                     // Safe numeric conversion: handle ulong values that exceed long.MaxValue
-                    long numericVal;
-                    if (field.ConstantValue is ulong ulongVal)
-                        numericVal = unchecked((long)ulongVal);
-                    else
-                        numericVal = Convert.ToInt64(field.ConstantValue);
+                    var numericVal = GetNumericValue(field.ConstantValue);
 
                     var fieldXmlDocs = field.GetDocumentationCommentXml() ?? "";
                     members.Add(new EnumMemberInfo(field.Name, description, shortName, order, groupName, numericVal, fieldXmlDocs));
@@ -243,12 +253,30 @@ namespace EnumWrapper.SourceGenerators
                 targetNamespace,
                 sortedMembers,
                 underlyingTypeName,
+                isUnsignedUnderlyingType,
                 isFlags,
                 hasJson,
                 isContiguous,
                 enumXmlDocs,
-                hasWpf
+                hasWpf,
+                declarationLocation
             );
+        }
+
+        private static decimal GetNumericValue(object constantValue)
+        {
+            return constantValue switch
+            {
+                byte value => value,
+                sbyte value => value,
+                short value => value,
+                ushort value => value,
+                int value => value,
+                uint value => value,
+                long value => value,
+                ulong value => value,
+                _ => throw new InvalidOperationException($"Unsupported enum constant type '{constantValue.GetType().FullName}'.")
+            };
         }
     }
 }

@@ -94,4 +94,23 @@ namespace TestNamespace
         [System.ComponentModel.DataAnnotations.Display(GroupName = "Beta", Order = 1)]
         Second
     }
+
+    [GenerateEnumWrapper]
+    public enum LargeUnsignedEnum : ulong
+    {
+        Zero = 0,
+
+        [System.ComponentModel.Description("High Unsigned Value")]
+        High = 9223372036854775808UL,
+
+        Max = ulong.MaxValue
+    }
+
+    [GenerateEnumWrapper]
+    public enum SignedLongEnum : long
+    {
+        Min = long.MinValue,
+        Zero = 0,
+        Max = long.MaxValue
+    }
 }
