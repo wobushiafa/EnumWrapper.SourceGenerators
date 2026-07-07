@@ -113,4 +113,16 @@ namespace TestNamespace
         Zero = 0,
         Max = long.MaxValue
     }
+
+    // Contiguous enum starting from 1 (not 0) to test MinNumericValue optimization
+    [GenerateEnumWrapper]
+    public enum OneBasedEnum
+    {
+        [System.ComponentModel.Description("First (1-based)")]
+        First = 1,
+        [System.ComponentModel.Description("Second (1-based)")]
+        Second = 2,
+        [System.ComponentModel.Description("Third (1-based)")]
+        Third = 3
+    }
 }

@@ -190,9 +190,10 @@ namespace EnumWrapper.SourceGenerators
                 var valueToItemsIndex = new int[count];
                 for (int v = 0; v < count; v++)
                 {
+                    var expectedNumericValue = enumInfo.MinNumericValue + v;
                     for (int j = 0; j < itemsOrder.Length; j++)
                     {
-                        if (itemsOrder[j].NumericValue == v)
+                        if (itemsOrder[j].NumericValue == expectedNumericValue)
                         {
                             valueToItemsIndex[v] = j;
                             break;
@@ -209,7 +210,7 @@ namespace EnumWrapper.SourceGenerators
                 sb.AppendLine($"{indent}    /// <summary>Resolves a wrapper instance from its enum value in O(1) speed.</summary>");
                 sb.AppendLine($"{indent}    public static {enumInfo.WrapperClassName} FromValue({enumInfo.EnumFullName} value)");
                 sb.AppendLine($"{indent}    {{");
-                sb.AppendLine($"{indent}        int index = (int)value;");
+                sb.AppendLine($"{indent}        int index = (int)value - {enumInfo.MinNumericValue};");
                 sb.AppendLine($"{indent}        if (index >= 0 && index < _byValue.Length)");
                 sb.AppendLine($"{indent}        {{");
                 sb.AppendLine($"{indent}            return _byValue[index];");

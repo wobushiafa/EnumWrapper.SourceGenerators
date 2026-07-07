@@ -7,7 +7,7 @@ Bilingual Documentation: [English](#english) | [中文说明](#chinese-documenta
 <a name="english"></a>
 ## English
 
-`EnumWrapper.SourceGenerators` is a high-performance, zero-overhead C# Source Generator library that automatically wraps enums into strongly-typed model classes at compile time. It is designed to bridge the gap between backend enum logic and UI bindings (WPF, Avalonia, MAUI, WinForms) by resolving `[Description]` and `[Display]` attributes into a bindable structure, completely eliminating the need for runtime reflection.
+`EnumWrapper.SourceGenerators` is a high-performance, zero-overhead C# incremental source generator that automatically wraps enums into strongly-typed model classes at compile time. It bridges the gap between backend enum logic and UI bindings (WPF, Avalonia, MAUI, WinForms) by resolving `[Description]` and `[Display]` attributes into a bindable structure, completely eliminating the need for runtime reflection.
 
 ### Key Features
 
@@ -15,12 +15,12 @@ Bilingual Documentation: [English](#english) | [中文说明](#chinese-documenta
 2. **Conditional WPF Support**: Automatically generates a WPF `IValueConverter` singleton if WPF assembly references are detected.
 3. **TypeConverter Integration**: Native `TypeConverter` allows XAML parsers to assign strings directly to wrapper properties (e.g. `Status="Pending Payment"`). The generated converter also carries a `[DisplayName]` attribute for friendly designer display.
 4. **DisplayAttribute Sorting & Grouping**: Compile-time sorting via `Order` property and native categorization via `GroupName`.
-5. **O(1) Array Lookup**: Detects sequential, 0-started contiguous enums and optimizes the lookup dictionary into direct array indexing. A separate value-ordered lookup array ensures correct retrieval even when `DisplayAttribute.Order` differs from numeric ordering.
+5. **O(1) Array Lookup**: Detects contiguous enums and optimizes the lookup into direct array indexing. Supports enums starting from any value (e.g. 1, 2, 3). A separate value-ordered lookup array ensures correct retrieval even when `DisplayAttribute.Order` differs from numeric ordering.
 6. **Bilingual XML Documentation Copying**: Automatically copies original `/// <summary>` comments to the generated classes and properties.
 7. **Zero-Dependency JSON Serialization**: Injects a custom converter for `System.Text.Json` if the JSON library is referenced.
 8. **Flags Enum Bitwise Support**: Multi-flags evaluation supporting `HasFlag()`, `GetFlags()`, and comma-separated Descriptions.
-9. **Compiler Diagnostics**: Emits compile-time errors (`EWG001`, `EWG002`) if generator attributes are misused.
-10. **Display ShortName Support**: Extracts the `ShortName` property from `[Display(ShortName = ...)]` and generates a corresponding `ShortName` property on the wrapper class when any member uses it, giving you a compact label for space-constrained UIs.
+9. **Compiler Diagnostics**: Emits compile-time errors (`EWG001`–`EWG004`) for invalid attribute usage and configuration conflicts.
+10. **Display ShortName Support**: Extracts the `ShortName` property from `[Display(ShortName = ...)]` and generates a corresponding `ShortName` property on the wrapper class when any member uses it.
 
 ---
 
@@ -36,7 +36,7 @@ Or reference it directly in your `.csproj` file as a development dependency:
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="EnumWrapper.SourceGenerators" Version="1.1.1" PrivateAssets="all" />
+  <PackageReference Include="EnumWrapper.SourceGenerators" Version="1.2.0" PrivateAssets="all" />
 </ItemGroup>
 ```
 
@@ -79,11 +79,11 @@ namespace MyApp
 }
 ```
 
-This generates `OrderStatusWrapper`.
+This generates `OrderStatusWrapper` in the same namespace.
 
 > [!TIP]
 > **Optional: Customizing Class Name & Namespace**
-> These properties are **completely optional**. By default, the wrapper class is automatically generated in the same namespace as the enum, using the name `{EnumName}Wrapper`. You only need to specify them if you want to override the defaults:
+> By default, the wrapper class is automatically generated in the same namespace as the enum, using the name `{EnumName}Wrapper`. You only need to specify them if you want to override the defaults:
 > ```csharp
 > [GenerateEnumWrapper(WrapperClassName = "MyStatusWrapper", CustomNamespace = "MyCustomNamespace.Domain")]
 > public enum OrderStatus
@@ -93,6 +93,7 @@ This generates `OrderStatusWrapper`.
 > ```
 
 ##### UI Binding (ComboBox / ListBox)
+
 Bind directly to `Items`. Since `ToString()` returns `Description`, **no `DisplayMemberPath` is needed**:
 
 ```xml
@@ -102,6 +103,7 @@ Bind directly to `Items`. Since `ToString()` returns `Description`, **no `Displa
 ```
 
 ##### TypeConverter (XAML Direct String Assignment)
+
 Assign string values directly to properties of type `OrderStatusWrapper` in XAML:
 
 ```xml
@@ -109,6 +111,7 @@ Assign string values directly to properties of type `OrderStatusWrapper` in XAML
 ```
 
 ##### Smart Parsing in Code
+
 ```csharp
 // Parse by Description
 if (OrderStatusWrapper.TryParse("Shipped to Customer", out var w1))
@@ -179,6 +182,7 @@ public enum UserPermissions : byte
 ```
 
 ##### C# Bitwise Helpers
+
 ```csharp
 var readWrite = UserPermissionsWrapper.FromValue(UserPermissions.Read | UserPermissions.Write);
 
@@ -221,6 +225,18 @@ var w2 = JsonSerializer.Deserialize<OrderStatusWrapper>("1"); // OrderStatus.Shi
 ```
 
 ---
+
+### Compiler Diagnostics
+
+| ID | Description |
+|---|---|
+| `EWG001` | `[GenerateEnumWrapper]` attribute applied to a non-enum type. |
+| `EWG002` | `[GenerateEnumWrapperFor]` targets a non-enum type. |
+| `EWG003` | The same enum is configured to generate the same wrapper multiple times. |
+| `EWG004` | Two different enums are configured to generate wrappers with the same fully qualified name. |
+
+---
+
 ---
 
 <a name="chinese-documentation"></a>
@@ -234,11 +250,11 @@ var w2 = JsonSerializer.Deserialize<OrderStatusWrapper>("1"); // OrderStatus.Shi
 2. **条件 WPF 转换器**：检测到项目引用 WPF 时，自动生成方便 XAML 直接使用的 `IValueConverter` 单例。
 3. **XAML 属性直赋**：生成 `TypeConverter`，允许在 XAML 中直接为包装类属性赋予字符串字面量（如 `Status="Pending Payment"`）。生成的转换器还带有 `[DisplayName]` 特性便于设计器友好显示。
 4. **编译期排序与分组**：解析 `DisplayAttribute` 的 `Order` 进行编译期排序，提供 `GroupName` 属性用于 UI 分组。
-5. **O(1) 数组寻址**：对于从 0 开始连续递增的枚举，自动省去 Dictionary 查表，优化为 O(1) 数组索引定位。即使 `DisplayAttribute.Order` 排序与数值顺序不一致也能正确映射。
+5. **O(1) 数组寻址**：对于连续递增的枚举，自动省去 Dictionary 查表，优化为 O(1) 数组索引定位。支持从任意值开始的连续枚举（如 1, 2, 3）。即使 `DisplayAttribute.Order` 排序与数值顺序不一致也能正确映射。
 6. **文档注释完美拷贝**：自动将您在枚举上编写的 `/// <summary>` XML 注释拷贝至生成的类与属性上，保留完美的 IDE 悬停提示。
 7. **零依赖 JSON 序列化**：条件装配对 `System.Text.Json` 的支持，让包装类在 Web API 传输中无缝反序列化（支持从数值、名字、描述还原）。
 8. **标志位域（Flags）支持**：支持 `HasFlag()`、`GetFlags()`，且多选组合值（如 `Read | Write`）会自动用逗号拼接 Description。
-9. **编译期诊断报错**：在开发人员误用特性（例如将特性贴在 class 上）时，直接在 IDE 中报红线编译错误（`EWG001`, `EWG002`）。
+9. **编译期诊断报错**：在开发人员误用特性时，直接在 IDE 中报红线编译错误（`EWG001`–`EWG004`）。
 10. **ShortName 简标支持**：提取 `[Display(ShortName = ...)]` 属性，在有成员使用时自动在包装类上生成 `ShortName` 属性，为空间有限的 UI 场景提供简洁标签。
 
 ---
@@ -255,7 +271,7 @@ dotnet add package EnumWrapper.SourceGenerators
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="EnumWrapper.SourceGenerators" Version="1.1.1" PrivateAssets="all" />
+  <PackageReference Include="EnumWrapper.SourceGenerators" Version="1.2.0" PrivateAssets="all" />
 </ItemGroup>
 ```
 
@@ -312,6 +328,7 @@ namespace MyApp
 > ```
 
 ##### 界面绑定 (WPF / Avalonia XAML)
+
 直接绑定至静态 `Items` 属性。由于 `ToString()` 被重写为返回 Description，**不需要写 `DisplayMemberPath`**：
 
 ```xml
@@ -321,6 +338,7 @@ namespace MyApp
 ```
 
 ##### XAML 字符串直赋 (TypeConverter)
+
 在 XAML 中，您可以将字符串字面量直接赋给类型为 `OrderStatusWrapper` 的控件属性：
 
 ```xml
@@ -328,6 +346,7 @@ namespace MyApp
 ```
 
 ##### C# 智能类型转换与解析
+
 ```csharp
 // 1. 根据描述文本解析
 if (OrderStatusWrapper.TryParse("已向客户发货", out var w1))
@@ -398,6 +417,7 @@ public enum UserPermissions : byte
 ```
 
 ##### C# 位运算使用
+
 ```csharp
 var readWrite = UserPermissionsWrapper.FromValue(UserPermissions.Read | UserPermissions.Write);
 
@@ -438,6 +458,17 @@ string json = JsonSerializer.Serialize(wrapper); // "\"Shipped\""
 var w1 = JsonSerializer.Deserialize<OrderStatusWrapper>("\"已向客户发货\"");
 var w2 = JsonSerializer.Deserialize<OrderStatusWrapper>("1"); // 还原为 OrderStatus.Shipped 实体
 ```
+
+---
+
+### 编译器诊断
+
+| ID | 说明 |
+|---|---|
+| `EWG001` | `[GenerateEnumWrapper]` 特性被应用到了非枚举类型上。 |
+| `EWG002` | `[GenerateEnumWrapperFor]` 的目标类型不是枚举。 |
+| `EWG003` | 同一个枚举被多次配置生成同一个包装类。 |
+| `EWG004` | 两个不同的枚举被配置生成相同全限定名的包装类。 |
 
 ---
 

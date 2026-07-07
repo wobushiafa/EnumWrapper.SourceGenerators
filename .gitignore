@@ -20,6 +20,10 @@ obj/
 .idea/
 .vscode/
 
+## Claude Code
+.claude/
+CLAUDE.md
+
 ## Publish output
 publish/
 *.publish.xml

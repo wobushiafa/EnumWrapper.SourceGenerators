@@ -12,7 +12,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <IncludeBuildOutput>false</IncludeBuildOutput> <!-- Do not include the dll in lib/ folder -->
     <PackageId>EnumWrapper.SourceGenerators</PackageId>
-    <Version>1.1.1</Version>
+    <Version>1.2.0</Version>
     <Authors>wobushiafa</Authors>
     <Description>A high-performance C# incremental source generator that wraps enums into strongly-typed model classes for seamless UI binding (WPF, Avalonia, MAUI, etc.), complete with smart TryParse, JSON serialization, flags, TypeConverters, XML doc copying, compile-time sorting/grouping, and WPF value converters.</Description>
     <PackageProjectUrl>https://github.com/wobushiafa/EnumWrapper.SourceGenerators</PackageProjectUrl>
@@ -23,6 +23,14 @@
     <DevelopmentDependency>true</DevelopmentDependency>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <NoWarn>$(NoWarn);NU5128</NoWarn>
+
+    <!-- Source Link & Symbols -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <DeterministicSourcePaths>true</DeterministicSourcePaths>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,6 +39,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.0" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>

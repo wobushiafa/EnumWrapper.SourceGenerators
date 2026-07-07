@@ -26,6 +26,7 @@ namespace TestNamespace
             Assert.AreEqual(2, GroupOnlyEnumWrapper.Items.Count);
             Assert.AreEqual(3, LargeUnsignedEnumWrapper.Items.Count);
             Assert.AreEqual(3, SignedLongEnumWrapper.Items.Count);
+            Assert.AreEqual(3, OneBasedEnumWrapper.Items.Count);
         }
 
         [TestMethod]
@@ -113,7 +114,17 @@ namespace TestNamespace
             Assert.IsTrue(TestEnumWrapper.TryParse("first", out var result4));
             Assert.AreEqual(TestEnum.First, result4!.Value);
 
-            // 3. Invalid parse
+            // 3. Parse by numeric value (NEW: TryParse now supports numeric strings)
+            Assert.IsTrue(TestEnumWrapper.TryParse("0", out var resultNum0));
+            Assert.AreEqual(TestEnum.First, resultNum0!.Value);
+
+            Assert.IsTrue(TestEnumWrapper.TryParse("1", out var resultNum1));
+            Assert.AreEqual(TestEnum.Second, resultNum1!.Value);
+
+            Assert.IsTrue(TestEnumWrapper.TryParse("2", out var resultNum2));
+            Assert.AreEqual(TestEnum.Third, resultNum2!.Value);
+
+            // 4. Invalid parse
             Assert.IsFalse(TestEnumWrapper.TryParse("InvalidText", out var result5));
             Assert.IsNull(result5);
         }
@@ -276,6 +287,24 @@ namespace TestNamespace
         }
 
         [TestMethod]
+        public void TestOneBasedContiguousOptimization()
+        {
+            // OneBasedEnum (values: 1, 2, 3) should also use O(1) array lookup
+            // This tests the MinNumericValue optimization
+            var first = OneBasedEnumWrapper.FromValue(OneBasedEnum.First);
+            Assert.AreEqual(OneBasedEnum.First, first.Value);
+            Assert.AreEqual("First (1-based)", first.Description);
+
+            var second = OneBasedEnumWrapper.FromValue(OneBasedEnum.Second);
+            Assert.AreEqual(OneBasedEnum.Second, second.Value);
+            Assert.AreEqual("Second (1-based)", second.Description);
+
+            var third = OneBasedEnumWrapper.FromValue(OneBasedEnum.Third);
+            Assert.AreEqual(OneBasedEnum.Third, third.Value);
+            Assert.AreEqual("Third (1-based)", third.Description);
+        }
+
+        [TestMethod]
         public void TestFromValueWithNonContiguousEnum()
         {
             // NonContiguousEnum has values 10, 20, 30
@@ -423,6 +452,39 @@ namespace TestNamespace
             var deserializedMax = JsonSerializer.Deserialize<SignedLongEnumWrapper>("9223372036854775807");
             Assert.IsNotNull(deserializedMax);
             Assert.AreEqual(SignedLongEnum.Max, deserializedMax.Value);
+        }
+
+        [TestMethod]
+        public void TestTryParseNumericValue()
+        {
+            // Test parsing by numeric string for non-contiguous enum
+            Assert.IsTrue(NonContiguousEnumWrapper.TryParse("10", out var result1));
+            Assert.AreEqual(NonContiguousEnum.Item10, result1!.Value);
+
+            Assert.IsTrue(NonContiguousEnumWrapper.TryParse("20", out var result2));
+            Assert.AreEqual(NonContiguousEnum.Item20, result2!.Value);
+
+            Assert.IsTrue(NonContiguousEnumWrapper.TryParse("30", out var result3));
+            Assert.AreEqual(NonContiguousEnum.Item30, result3!.Value);
+        }
+
+        [TestMethod]
+        public void TestFlagsCaching()
+        {
+            // Same composite flag should return same wrapper instance (cached)
+            var composite1 = UserPermissionsWrapper.FromValue(UserPermissions.Read | UserPermissions.Write);
+            var composite2 = UserPermissionsWrapper.FromValue(UserPermissions.Read | UserPermissions.Write);
+
+            Assert.AreEqual(composite1.Value, composite2.Value);
+            Assert.AreEqual(composite1.Description, composite2.Description);
+            // Both should have the same description from cache
+            Assert.AreEqual("Read Permission, Write Permission", composite1.Description);
+        }
+
+        [TestMethod]
+        public void TestOneBasedEnumItemsCount()
+        {
+            Assert.AreEqual(3, OneBasedEnumWrapper.Items.Count);
         }
     }
 }

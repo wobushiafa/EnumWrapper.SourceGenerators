@@ -225,8 +225,9 @@ namespace EnumWrapper.SourceGenerators
                 .OrderBy(m => m.Order ?? int.MaxValue)
                 .ToImmutableArray();
 
-            // Detect contiguity starting from 0 (Flags enums are naturally not contiguous)
+            // Detect contiguity (Flags enums are naturally not contiguous)
             bool isContiguous = true;
+            decimal minNumericValue = 0;
             if (sortedMembers.Length == 0 || isFlags)
             {
                 isContiguous = false;
@@ -235,9 +236,10 @@ namespace EnumWrapper.SourceGenerators
             {
                 // Sort by numeric value to check contiguity
                 var sortedByValue = sortedMembers.OrderBy(m => m.NumericValue).ToArray();
+                minNumericValue = sortedByValue[0].NumericValue;
                 for (int i = 0; i < sortedByValue.Length; i++)
                 {
-                    if (sortedByValue[i].NumericValue != i)
+                    if (sortedByValue[i].NumericValue != minNumericValue + i)
                     {
                         isContiguous = false;
                         break;
@@ -257,6 +259,7 @@ namespace EnumWrapper.SourceGenerators
                 isFlags,
                 hasJson,
                 isContiguous,
+                minNumericValue,
                 enumXmlDocs,
                 hasWpf,
                 declarationLocation

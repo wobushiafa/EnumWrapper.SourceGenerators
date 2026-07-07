@@ -18,6 +18,7 @@ namespace EnumWrapper.SourceGenerators
         public bool IsFlags { get; }
         public bool HasJson { get; }
         public bool IsContiguous { get; }
+        public decimal MinNumericValue { get; }
         public string XmlDocumentation { get; }
         public bool HasWpf { get; }
         public Location DeclarationLocation { get; }
@@ -34,6 +35,7 @@ namespace EnumWrapper.SourceGenerators
             bool isFlags,
             bool hasJson,
             bool isContiguous,
+            decimal minNumericValue,
             string xmlDocumentation,
             bool hasWpf,
             Location declarationLocation)
@@ -49,6 +51,7 @@ namespace EnumWrapper.SourceGenerators
             IsFlags = isFlags;
             HasJson = hasJson;
             IsContiguous = isContiguous;
+            MinNumericValue = minNumericValue;
             XmlDocumentation = xmlDocumentation;
             HasWpf = hasWpf;
             DeclarationLocation = declarationLocation;
@@ -68,6 +71,7 @@ namespace EnumWrapper.SourceGenerators
                    IsFlags == other.IsFlags &&
                    HasJson == other.HasJson &&
                    IsContiguous == other.IsContiguous &&
+                   MinNumericValue == other.MinNumericValue &&
                    XmlDocumentation == other.XmlDocumentation &&
                    HasWpf == other.HasWpf &&
                    Members.SequenceEqual(other.Members);
@@ -90,6 +94,7 @@ namespace EnumWrapper.SourceGenerators
                 hash = hash * 23 + IsFlags.GetHashCode();
                 hash = hash * 23 + HasJson.GetHashCode();
                 hash = hash * 23 + IsContiguous.GetHashCode();
+                hash = hash * 23 + MinNumericValue.GetHashCode();
                 hash = hash * 23 + XmlDocumentation.GetHashCode();
                 hash = hash * 23 + HasWpf.GetHashCode();
                 foreach (var member in Members)
